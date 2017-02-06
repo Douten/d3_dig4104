@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+.path--background {
+  fill: none;
+  stroke: #000;
+  stroke-width: 2px;
+}
+
+.label {
+  font: 24px sans-serif;
+  text-anchor: middle;
+}
+
+</style>
+<body>
+<script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var fields = [
+  {value: 100, size: 100, label: "HTML", update: function(date) { return 100; }},
+  {value: 100, size: 100, label: "CSS", update: function(date) { return 80; }},
+  {value: 100, size: 100, label: "JS", update: function(date) { return 60; }}
+];
+
+var arc = d3.svg.arc()
+    .innerRadius(width / 6.5 - 60)
+    .outerRadius(width / 6.5 - 5)
+    .startAngle(0)
+    .endAngle(function(d) { return (d.value / d.size) * 2 * Math.PI; });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+var field = svg.selectAll(".field")
+    .data(fields)
+    .enter().append("g")
+    .attr("transform", function(d, i) { return "translate(" + (i * 2 + 1.25) / 6.5 * width + "," + height / 2 + ")"; }) //position
+    .attr("class", "field");
+
+field.append("path")
+    .attr("class", "path path--background")
+    .attr("d", arc);
+
+var path = field.append("path")
+    .attr("class", "path path--foreground");
+
+var label = field.append("text")
+    .attr("class", "label")
+    .attr("dy", ".35em");
+
+(function update() {
+  var now = new Date();
+
+  field
+      .each(function(d) { d.previous = d.value, d.value = d.update(now); });
+
+  path.transition()
+      .ease("elastic")
+      .duration(5000)
+      .attrTween("d", arcTween);
+
+  label
+      .text(function(d) { return d.label; });
+
+})();
+
+function arcTween(b) {
+  var i = d3.interpolate({value: b.previous}, b);
+  return function(t) {
+    return arc(i(t));
+  };
+}
+
+</script>
